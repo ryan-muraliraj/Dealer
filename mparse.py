@@ -1,5 +1,5 @@
 import discord, datetime
-import manager, main
+import manager
 
 class Parser():
 
@@ -33,8 +33,8 @@ class Parser():
                 else:
                     self.m.save_to_server('WHX', self.user, num)
                 return f"Daily claimed! {num} credits added to balance. Come back in 24 hours."
-            case 'profile' | 'bank' | 'money' | 'credits' | 'credit':
-                return self.profile()
+            case ['profile' | 'bank' | 'money' | 'credits' | 'credit', *args]:
+                return self.profile(args[0])
             case other:
                 return "Not a recognized command."
 
