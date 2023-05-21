@@ -84,7 +84,7 @@ class JSONManager():
                         obj[str(user_name)] = datetime.datetime.now().isoformat()
                         json.dump(obj, f)
                         f.close()
-                        return 20
+                        return True
                     else:
                         return diff
                 else:
@@ -93,7 +93,8 @@ class JSONManager():
                     obj[str(user_name)] = datetime.datetime.now().isoformat()
                     json.dump(obj, f)
                     f.close()
-                    return 20
+                    return True
         except Exception as ex:
             print("daily is failing")
             print(ex)        
+    

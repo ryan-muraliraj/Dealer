@@ -1,4 +1,4 @@
-profile credits money bank
-createbet
-joinbet
-lockbet
+profile
+daily
+lottery
+

@@ -9,10 +9,12 @@ Bucket 1
 
 
 Bucket 2
+> make daily better
 > create spin command
 > create send money command
 > create wager (a bet between 2 people only)
 > create polls (both result showing live and not live)
+> create "titles"
 
 Bucket 3
 > extrapolate all string constants into single file
