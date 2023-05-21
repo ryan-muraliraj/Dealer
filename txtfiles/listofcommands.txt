@@ -1,0 +1,4 @@
+profile credits money bank
+createbet
+joinbet
+lockbet

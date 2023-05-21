@@ -1,7 +1,7 @@
 import os, json, datetime
 from pathlib import Path
 
-class Manager():
+class JSONManager():
 
     def __init__(self) -> None:
         self.json = ""

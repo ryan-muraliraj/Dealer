@@ -1,0 +1,22 @@
+Bucket 1
+> create bets class
+> create bets manager class (can be within same file as bets class)
+> revamp the directories by making main.py the only file on the top level along with txtfiles and readme
+>> folder name: "dealer", contains "dealer.py, constants.py, jsonmanager.py" and the folders "objects, tests, data"
+>> folder name: "objects" will contain bets.py and any other objects created down the line
+>> folder name: "tests" will contain any other tests created down the line 
+>> folder name: "data" will contain existing folders credits and dailies
+
+
+Bucket 2
+> create spin command
+> create send money command
+> create wager (a bet between 2 people only)
+> create polls (both result showing live and not live)
+
+Bucket 3
+> extrapolate all string constants into single file
+> switch from json to SQL or someother better solution
+
+
+
