@@ -32,7 +32,11 @@ class JSONManager():
                 print("load from server failed")
                 print(ex)
         else:
-            print("Error")
+            f = open(self.path, 'w')
+            f.close()
+            print("credits file created")
+            return False
+            
 
         pass
 
@@ -70,11 +74,13 @@ class JSONManager():
                 f = open(self.path, 'w')
                 x = {str(user_name) : datetime.datetime.now().isoformat()}
                 json.dump(x, f)
+                return False
             else:
                 f = open(self.path, 'r')
                 obj = json.load(f)
                 f.close()
                 if(str(user_name) in obj.keys()):
+                    print("user is inside!")
                     newtime = datetime.datetime.now()
                     oldtime = datetime.datetime.fromisoformat(obj[str(user_name)])
                     diff = newtime - oldtime
@@ -88,6 +94,7 @@ class JSONManager():
                     else:
                         return diff
                 else:
+                    print("Creating user.")
                     f = open(self.path, 'w').close()
                     f = open(self.path, 'w')
                     obj[str(user_name)] = datetime.datetime.now().isoformat()
