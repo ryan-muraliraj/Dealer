@@ -1,4 +1,4 @@
-import discord, datetime, random, string
+import discord, datetime, random, string, math
 import constants, strings
 from jsonmanager import JSONManager
 
@@ -25,7 +25,7 @@ class Dealer(bridge.Bot):
     def load_commands(self):
         JM = self.jsonmanager
        
-        @self.slash_command(name="profile", guild_ids=[696122756072341616])
+        @self.slash_command(name="profile", guild_ids=[696122756072341616,536687593551691777])
         async def profile(ctx, user: discord.Option(discord.Member, "Enter a username", required=False, default=None) = None):
             await ret_profile(ctx, user)
                 
@@ -59,13 +59,13 @@ class Dealer(bridge.Bot):
 
         async def embed_profile(user) -> discord.Embed:
                 credits = JM.load_server('WHX', user, False)
-                embed = discord.Embed(title=user, description=f"Credits: {credits}", color=discord.Color.random())
+                embed = discord.Embed(title=user, description=f"Credits: {credits}", color=discord.Color.dark_blue())
                 embed.set_author(name="Profile")
                 embed.set_thumbnail(url=f"{user.display_avatar}")
                 embed.set_footer(text=datetime.datetime.now().strftime('%m/%d/%Y'))
                 return embed
 
-        @self.bridge_command(name="daily", guild_ids=[696122756072341616])
+        @self.bridge_command(name="daily", guild_ids=[696122756072341616,536687593551691777])
         async def daily(ctx):
             var = JM.daily('WHX', ctx.author)
             if not(type(var) is bool):
@@ -95,14 +95,14 @@ class Dealer(bridge.Bot):
 
         async def embed_daily(user, response) -> discord.Embed:
             credits = JM.load_server('WHX', user, False)
-            embed = discord.Embed(description=response, color=discord.Color.random())
+            embed = discord.Embed(description=response, color=discord.Color.dark_blue())
             embed.set_author(name=user.name, icon_url=user.display_avatar)
             embed.set_thumbnail(url=f"{self.user.display_avatar}")
             embed.add_field(name="Total Credits", value=credits)
             embed.set_footer(text="Claimed "+datetime.datetime.now().strftime('%m/%d/%Y'))
             return embed
 
-        @self.bridge_command(name="lottery", guild_ids=[696122756072341616])
+        @self.bridge_command(name="lottery", guild_ids=[696122756072341616,536687593551691777])
         async def lottery(ctx):
 
             today = await ret_lottery()
@@ -171,7 +171,7 @@ class Dealer(bridge.Bot):
             credits = JM.load_server('WHX', user, False)
             wintik = await ret_lottery()
             offby = 8-lottery_ticket[0]
-            embed = discord.Embed(title="Lottery Ticket", description=f"`{lottery_ticket[1]}`", color=discord.Color.random())
+            embed = discord.Embed(title="Lottery Ticket", description=f"`{lottery_ticket[1]}`", color=discord.Color.dark_blue())
             if(offby != 0):
                 embed.set_author(name=user.name, icon_url=user.display_avatar)
                 embed.set_thumbnail(url=f"{self.user.display_avatar}")
@@ -188,10 +188,86 @@ class Dealer(bridge.Bot):
                 embed.set_footer(text="Purchased on "+datetime.datetime.now().strftime('%m/%d/%Y'))
             return embed                           
             
-
         async def int_lottery() -> int:
             return random.randint(20,30)*1000
 
+        @self.slash_command(name="spin", guild_ids=[696122756072341616,536687593551691777])
+        async def spin(ctx, amount : discord.Option(int, "Enter an amount to put into the spin", required=False, default=None) = None):
+            togamble = 0
+            if(amount == None):
+                togamble = 100
+                await process_spin(ctx, togamble)
+            elif(amount < 100):
+                await ctx.respond("You must put at least 100 credits into a spin.")
+            else:
+                togamble = amount
+                await process_spin(ctx, togamble)
+                pass
+            pass
+        
+        async def process_spin(ctx, togamble):
+            if(JM.load_server('WHX', ctx.author, True)):
+                credits = JM.load_server('WHX', ctx.author, False)
+                if(credits < togamble):
+                    await ctx.respond(f"You do not have {togamble} credits to gamble.")
+                else:
+                    spinresult = await gen_spin(togamble)
+                    JM.save_to_server('WHX',ctx.author,credits-togamble+spinresult[1])
+                    embed = await embed_spin(ctx.author, spinresult, togamble)
+                    await ctx.respond(embed=embed)
+                    pass
+            else:
+                await ctx.respond("You need at least 100 credits to spin.")
+            
+        async def gen_spin(togamble:int) -> tuple:
+            rand = random.randint(1,500)
+            multiplier = 0
+            if (rand <= 250):
+                multiplier = 0.6
+            elif (rand <= 300):
+                multiplier = 0.8
+            elif (rand <= 400):
+                multiplier = 1
+            elif (rand <= 470):
+                multiplier = 1.2
+            elif (rand <= 480):
+                multiplier = 1.4
+            elif (rand <= 495):
+                multiplier = 2
+            elif (rand == 496):
+                multiplier = 3
+            elif (rand == 497):
+                multiplier = 4
+            elif (rand == 498):
+                multiplier = 8
+            elif (rand == 499):
+                multiplier = 16
+            elif (rand == 500):
+                multiplier = 32
+            else:
+                multiplier = 1
+            winnings = math.ceil(multiplier*togamble)
+            return (multiplier, winnings)
+
+        async def embed_spin(user, spinresult : tuple, investment:int):
+            credits = JM.load_server('WHX', user, False)
+            net = ""
+            netint = spinresult[1]-investment
+            if(netint < 0):
+                net = f"for a {abs(netint)} loss of credits!"
+            elif(netint > 0):
+                net = f"for a {netint} return on credits!"
+            else:
+                net = "to cut even!"
+            embed = discord.Embed(description=f"You landed on {spinresult[0]}x {net}", color=discord.Color.dark_blue())
+            embed.set_author(name=user.name, icon_url=user.display_avatar)
+            embed.set_thumbnail(url=f"{self.user.display_avatar}")
+            embed.add_field(name="Spent", value=investment)
+            embed.add_field(name="Gained", value=spinresult[1], inline=True)
+            embed.add_field(name="Total Credits", value=credits, inline=False)
+            embed.set_footer(text="Gamblers are always 1 spin away from hitting big!")
+            return embed           
+        
         @self.event
         async def on_ready():
             print("The Dealer is up and running.")
