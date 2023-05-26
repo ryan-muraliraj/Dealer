@@ -105,3 +105,28 @@ class JSONManager():
             print("daily is failing")
             print(ex)        
     
+    def load_all(self, server_name:str):
+        y = os.path.join(os.path.dirname(__file__), "credits")
+        os.makedirs(y, exist_ok=True)
+        self.path = Path(y + "\\{NAME}.json".format(NAME = server_name))
+        if os.path.exists(self.path) and self.path.suffix == '.json':
+            try:
+                if(os.path.getsize(self.path) == 0):
+                    return dict()
+                f = open(self.path, 'r')
+                obj = json.load(f)
+                self.json = obj
+                f.close()   
+                return obj
+            except Exception as ex:
+                print("load from server failed")
+                print(ex)
+        else:
+            f = open(self.path, 'w')
+            f.close()
+            print("credits file created")
+            return dict()
+        
+m = JSONManager()
+x = m.load_all('WHX')
+print(x)                    
