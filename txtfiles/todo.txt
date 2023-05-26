@@ -10,11 +10,16 @@ Bucket 1
 
 Bucket 2
 > create send money command
+> make leaderboard better
 > create wager (a bet between 2 people only)
+> create flipcoin
 > create polls (both result showing live and not live)
 > create "titles"
+> fortune command with chatgpts help
 
 Bucket 3
+> combine IBM watson and chatgpt to make fully functional human that doesn't need commands but can literally talk to in order to do actions
+> learn discord voice and see if I can live transcribe process and respond to voice chat
 > extrapolate all string constants into single file
 > switch from json to SQL or someother better solution
 
@@ -24,6 +29,7 @@ Done
 > lottery command
 > spin command
 > make daily better
+> leaderboard command
 
 
 

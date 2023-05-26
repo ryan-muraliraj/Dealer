@@ -25,7 +25,7 @@ class Dealer(bridge.Bot):
     def load_commands(self):
         JM = self.jsonmanager
        
-        @self.slash_command(name="profile", guild_ids=[696122756072341616,536687593551691777])
+        @self.slash_command(name="profile")
         async def profile(ctx, user: discord.Option(discord.Member, "Enter a username", required=False, default=None) = None):
             await ret_profile(ctx, user)
                 
@@ -65,7 +65,7 @@ class Dealer(bridge.Bot):
                 embed.set_footer(text=datetime.datetime.now().strftime('%m/%d/%Y'))
                 return embed
 
-        @self.bridge_command(name="daily", guild_ids=[696122756072341616,536687593551691777])
+        @self.bridge_command(name="daily")
         async def daily(ctx):
             var = JM.daily('WHX', ctx.author)
             if not(type(var) is bool):
@@ -102,7 +102,7 @@ class Dealer(bridge.Bot):
             embed.set_footer(text="Claimed "+datetime.datetime.now().strftime('%m/%d/%Y'))
             return embed
 
-        @self.bridge_command(name="lottery", guild_ids=[696122756072341616,536687593551691777])
+        @self.bridge_command(name="lottery")
         async def lottery(ctx):
 
             today = await ret_lottery()
@@ -191,7 +191,7 @@ class Dealer(bridge.Bot):
         async def int_lottery() -> int:
             return random.randint(20,30)*1000
 
-        @self.slash_command(name="spin", guild_ids=[696122756072341616,536687593551691777])
+        @self.slash_command(name="spin")
         async def spin(ctx, amount : discord.Option(int, "Enter an amount to put into the spin", required=False, default=None) = None):
             togamble = 0
             if(amount == None):
@@ -263,11 +263,31 @@ class Dealer(bridge.Bot):
             embed.set_author(name=user.name, icon_url=user.display_avatar)
             embed.set_thumbnail(url=f"{self.user.display_avatar}")
             embed.add_field(name="Spent", value=investment)
-            embed.add_field(name="Gained", value=spinresult[1], inline=True)
+            embed.add_field(name="Won", value=spinresult[1], inline=True)
             embed.add_field(name="Total Credits", value=credits, inline=False)
             embed.set_footer(text="Gamblers are always 1 spin away from hitting big!")
             return embed           
         
+        @self.bridge_command(name="leaderboard")
+        async def leaderboard(ctx):
+            server = JM.load_all('WHX')
+            server = sorted(server.items(), key = lambda item:item[1], reverse=True)
+            embed = discord.Embed(title="Leaderboard", description=f"These are the top five gamblers in WHX:", color=discord.Color.dark_blue())
+            embed.set_author(name="WHX")
+            embed.set_thumbnail(url=f"{self.user.display_avatar}")
+            embed.set_footer(text=datetime.datetime.now().strftime('%m/%d/%Y'))       
+            z = 1     
+            for x,y in server[:5]:
+                embed.add_field(name="", value=f"**{z}.** {x}: `{y} credits`", inline = False)
+                z+=1
+            await ctx.respond(embed=embed)
+
+        @self.command(name="test")
+        async def test(ctx):
+                print("a")
+                await ctx.message.add_reaction("🗿")
+                print("b")
+
         @self.event
         async def on_ready():
             print("The Dealer is up and running.")
