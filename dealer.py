@@ -1,5 +1,5 @@
 import discord, datetime, random, string, math
-import constants, strings
+import constants, strings, bets
 from jsonmanager import JSONManager
 
 from discord.ext import bridge, commands
@@ -12,6 +12,7 @@ class Dealer(bridge.Bot):
         intents.presences = True
         intents.message_content = True
         self.jsonmanager = JSONManager()
+        self.betmanager = bets.BetManager()
 
         super().__init__(command_prefix="*", intents=intents, help_command=None)
 
@@ -282,11 +283,66 @@ class Dealer(bridge.Bot):
                 z+=1
             await ctx.respond(embed=embed)
 
-        @self.command(name="test")
-        async def test(ctx):
-                print("a")
-                await ctx.message.add_reaction("🗿")
-                print("b")
+        @self.slash_command(name="bet")
+        async def bet(ctx, title: discord.Option(str, "Enter a title for the bet", required = True)):
+            embed = await embed_bet(title)
+            await ctx.respond(embed=embed, view=buttons_bet())
+        
+        async def embed_bet(title):
+            embed = discord.Embed(title=title, description="The bets are on.", color=discord.Color.dark_blue())
+            embed.set_thumbnail(url=f"{self.user.display_avatar}")
+            return embed
+
+        class buttons_bet(discord.ui.View):
+            @discord.ui.button(label="Join Bet", style=discord.ButtonStyle.success)
+            async def jb_button_callback(self, button, interaction):
+                await interaction.response.send_message(view=select_bet(), ephemeral=True)
+            
+            @discord.ui.button(label="Lock Bet", style=discord.ButtonStyle.danger)
+            async def lb_button_callback(self, button, interaction):
+                await interaction.response.send_message("WOOO")
+            
+            @discord.ui.button(label="Add Outcome", style=discord.ButtonStyle.primary)
+            async def ao_button_callback(self, button, interaction):
+                await interaction.response.send_message("MHM")
+
+        class select_bet(discord.ui.View):
+            @discord.ui.select( # the decorator that lets you specify the properties of the select menu
+            placeholder = "What outcome would you like to bet on?", # the placeholder text that will be displayed if nothing is selected
+            min_values = 1, # the minimum number of values that must be selected by the users
+            max_values = 1, # the maximum number of values that can be selected by the users
+            options = [ # the list of options from which users can choose, a required field
+                discord.SelectOption(
+                    label="Sentinels win 2-1",
+                    value = '0',
+                    description="possible 1.5x return"
+                ),
+                discord.SelectOption(
+                    label="NRG win 2-0",
+                    value = '1',
+                    description="possible 1.1x return"
+                ),
+                discord.SelectOption(
+                    label="Sentinels win 2-0",
+                    value = '2',
+                    description="possible 2.7x return"
+                )
+            ]
+            )
+            async def select_callback(self, select, interaction): # the function called when the user is done selecting options
+                #await interaction.response.send_message(f"Awesome! I like {index} too!", ephemeral=True)      
+                await interaction.response.send_modal(modal_bet(title=select.values[0]))      
+
+        class modal_bet(discord.ui.Modal):
+            def __init__(self, *args, **kwargs) -> None:
+                super().__init__(*args, **kwargs)
+                self.add_item(discord.ui.InputText(label="How much would you like to bet?", required=True, placeholder="100", min_length=3))
+
+            async def callback(self, interaction: discord.Interaction):
+                embed = discord.Embed(title="Modal Results")
+                embed.add_field(name="Short Input", value=self.children[0].value)
+                await interaction.response.send_message(embed=embed)            
+
 
         @self.event
         async def on_ready():
