@@ -87,11 +87,11 @@ class Dealer(bridge.Bot):
         async def gen_daily() -> tuple:
             odds = random.randint(1,20)
             if(odds < 16):
-                return (0,random.randint(100,199))
+                return (0,random.randint(300,400))
             elif(odds < 20):
-                return (1,random.randint(200,400))
+                return (1,random.randint(500,700))
             else:
-                return (2,random.randint(1000,1500))
+                return (2,random.randint(1200,1600))
 
         async def embed_daily(user, response) -> discord.Embed:
             credits = JM.load_server('WHX', user, False)
@@ -220,32 +220,10 @@ class Dealer(bridge.Bot):
                 await ctx.respond("You need at least 100 credits to spin.")
             
         async def gen_spin(togamble:int) -> tuple:
-            rand = random.randint(1,500)
-            multiplier = 0
-            if (rand <= 250):
-                multiplier = 0.6
-            elif (rand <= 300):
-                multiplier = 0.8
-            elif (rand <= 400):
-                multiplier = 1
-            elif (rand <= 470):
-                multiplier = 1.2
-            elif (rand <= 480):
-                multiplier = 1.4
-            elif (rand <= 495):
-                multiplier = 2
-            elif (rand == 496):
-                multiplier = 3
-            elif (rand == 497):
-                multiplier = 4
-            elif (rand == 498):
-                multiplier = 8
-            elif (rand == 499):
-                multiplier = 16
-            elif (rand == 500):
-                multiplier = 32
-            else:
-                multiplier = 1
+            multipliers = [0.6, 0.8, 1, 1.2, 1.4, 2, 3, 4, 8, 16, 32]
+            weights = [50,150,150,150,100,24,16,8,4,2,1]
+            rand = random.choices(multipliers, weights=weights)
+            multiplier = rand[0]
             winnings = math.ceil(multiplier*togamble)
             return (multiplier, winnings)
 
@@ -254,11 +232,11 @@ class Dealer(bridge.Bot):
             net = ""
             netint = spinresult[1]-investment
             if(netint < 0):
-                net = f"for a {abs(netint)} loss of credits!"
+                net = f"for a {abs(netint)} credit loss!"
             elif(netint > 0):
-                net = f"for a {netint} return on credits!"
+                net = f"for a {netint} net gain of credits!"
             else:
-                net = "to cut even!"
+                net = "to break even!"
             embed = discord.Embed(description=f"You landed on {spinresult[0]}x {net}", color=discord.Color.dark_blue())
             embed.set_author(name=user.name, icon_url=user.display_avatar)
             embed.set_thumbnail(url=f"{self.user.display_avatar}")
