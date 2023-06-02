@@ -221,7 +221,7 @@ class Dealer(bridge.Bot):
             
         async def gen_spin(togamble:int) -> tuple:
             multipliers = [0.6, 0.8, 1, 1.2, 1.4, 2, 3, 4, 8, 16, 32]
-            weights = [50,150,150,150,100,24,16,8,4,2,1]
+            weights = [100,250,150,150,100,24,16,8,4,2,1]
             rand = random.choices(multipliers, weights=weights)
             multiplier = rand[0]
             winnings = math.ceil(multiplier*togamble)
