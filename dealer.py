@@ -220,8 +220,8 @@ class Dealer(bridge.Bot):
                 await ctx.respond("You need at least 100 credits to spin.")
             
         async def gen_spin(togamble:int) -> tuple:
-            multipliers = [0.6, 0.8, 1, 1.2, 1.4, 2, 3, 4, 8, 16, 32]
-            weights = [100,250,150,150,100,24,16,8,4,2,1]
+            multipliers = [0.4, 0.6, 0.8, 1, 1.2, 1.4, 2, 3, 4, 8, 16, 32]
+            weights = [40,150,300,150,250,200,15,15,8,4,2,1]
             rand = random.choices(multipliers, weights=weights)
             multiplier = rand[0]
             winnings = math.ceil(multiplier*togamble)
