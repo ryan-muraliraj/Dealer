@@ -25,7 +25,8 @@ class Dealer(bridge.Bot):
 
     def load_commands(self):
         JM = self.jsonmanager
-       
+        BM = self.betmanager
+
         @self.slash_command(name="profile")
         async def profile(ctx, user: discord.Option(discord.Member, "Enter a username", required=False, default=None) = None):
             await ret_profile(ctx, user)
@@ -286,7 +287,8 @@ class Dealer(bridge.Bot):
         @self.slash_command(name="bet")
         async def bet(ctx, title: discord.Option(str, "Enter a title for the bet", required = True)):
             embed = await embed_bet(title)
-            await ctx.respond(embed=embed, view=buttons_bet())
+            betid = BM.create_bet(title)
+            await ctx.respond(embed=embed, view=buttons_bet(betid))
         
         async def embed_bet(title):
             embed = discord.Embed(title=title, description="The bets are on.", color=discord.Color.dark_blue())
@@ -294,19 +296,38 @@ class Dealer(bridge.Bot):
             return embed
 
         class buttons_bet(discord.ui.View):
+            def __init__(self, betid:int):
+                self.betid = betid
+                super().__init__(timeout=None)
+
             @discord.ui.button(label="Join Bet", style=discord.ButtonStyle.success)
             async def jb_button_callback(self, button, interaction):
-                await interaction.response.send_message(view=select_bet(), ephemeral=True)
+                await interaction.response.defer()
+                embed = discord.Embed(description="asdfadsf")
+                await interaction.edit_original_response(embed=embed)
+                # await interaction.response.send_message(view=select_bet(self.betid), ephemeral=True)
             
-            @discord.ui.button(label="Lock Bet", style=discord.ButtonStyle.danger)
-            async def lb_button_callback(self, button, interaction):
-                await interaction.response.send_message("WOOO")
+            # @discord.ui.button(label="Lock Bet", style=discord.ButtonStyle.danger, disabled=True)
+            # async def lb_button_callback(self, button, interaction):
+            #     await interaction.response.send_message("WOOO")
+
+            @discord.ui.button(label="Check Outcomes", style=discord.ButtonStyle.primary)
+            async def co_button_callback(self, button, interaction):
+                bet = BM.get_bet(self.betid)
+                outcomes = bet.get_outcomes()
+                for x in outcomes:
+                    print(x.title, x.id)
+                await interaction.response.send_message("Printed outcomes to console.")
             
             @discord.ui.button(label="Add Outcome", style=discord.ButtonStyle.primary)
             async def ao_button_callback(self, button, interaction):
-                await interaction.response.send_message("MHM")
+                await interaction.response.send_modal(modal_outcome(self.betid, title="Add Outcome"))
 
         class select_bet(discord.ui.View):
+            def __init__(self, betid:int):
+                self.betid = betid
+                super().__init__()
+
             @discord.ui.select( # the decorator that lets you specify the properties of the select menu
             placeholder = "What outcome would you like to bet on?", # the placeholder text that will be displayed if nothing is selected
             min_values = 1, # the minimum number of values that must be selected by the users
@@ -343,6 +364,18 @@ class Dealer(bridge.Bot):
                 embed.add_field(name="Short Input", value=self.children[0].value)
                 await interaction.response.send_message(embed=embed)            
 
+        class modal_outcome(discord.ui.Modal):
+            def __init__(self, betid:int, *args, **kwargs) -> None:
+                self.betid = betid
+                super().__init__(*args, **kwargs)
+                self.add_item(discord.ui.InputText(label="What is the title of the outcome?", required=True))
+
+            async def callback(self, interaction: discord.Interaction):
+                bet = BM.get_bet(self.betid)
+                bet.add_outcome(self.children[0].value)
+                embed = discord.Embed(title="Modal Results")
+                embed.add_field(name="Short Input", value=self.children[0].value)
+                await interaction.response.send_message(embed=embed) 
 
         @self.event
         async def on_ready():

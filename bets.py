@@ -44,9 +44,12 @@ class Bet():
         self.outcomes = list()
 
     def add_outcome(self, title):
-        new = Outcome(title)
+        outcome_index = len(self.outcomes)
+        new = Outcome(title, outcome_index)
         self.outcomes.append(new)
 
+    def get_outcomes(self):
+        return self.outcomes
 
     def add_user_to_outcome(self, index, user, amt):
         self.outcomes[index].fix_amount(user, amt)
@@ -67,9 +70,10 @@ class Bet():
                 return outcome
 
 class Outcome():
-    def __init__(self, title:str):
+    def __init__(self, title:str, id:int):
         self.users = dict()
         self.title = title
+        self.id = id 
         self.total_amount = 0
   
     def fix_amount(self, user:str, amt:int):
