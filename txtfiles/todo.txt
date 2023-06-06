@@ -1,6 +1,7 @@
 Bucket 1
-> create bets class
-> create bets manager class (can be within same file as bets class)
+> implement bets 
+> add server compatibilty
+> solidify econ
 > revamp the directories by making main.py the only file on the top level along with txtfiles and readme
 >> folder name: "dealer", contains "dealer.py, constants.py, jsonmanager.py" and the folders "objects, tests, data"
 >> folder name: "objects" will contain bets.py and any other objects created down the line
