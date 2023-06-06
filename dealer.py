@@ -205,6 +205,21 @@ class Dealer(bridge.Bot):
                 pass
             pass
         
+        @self.slash_command(name="spinall")
+        async def spin(ctx):
+            togamble = 0
+            if(JM.load_server('WHX', ctx.author, True)):
+                togamble = JM.load_server('WHX', ctx.author, False)
+                if(togamble < 100):
+                    await ctx.respond(f"You do not have 100 credits to gamble.")
+                else:
+                    spinresult = await gen_spin(togamble)
+                    JM.save_to_server('WHX',ctx.author,spinresult[1])
+                    embed = await embed_spin(ctx.author, spinresult, togamble)
+                    await ctx.respond(embed=embed)
+            else:
+                await ctx.respond("An error occured")
+            
         async def process_spin(ctx, togamble):
             if(JM.load_server('WHX', ctx.author, True)):
                 credits = JM.load_server('WHX', ctx.author, False)
@@ -259,6 +274,8 @@ class Dealer(bridge.Bot):
                 embed.add_field(name="", value=f"**{z}.** {x}: `{y} credits`", inline = False)
                 z+=1
             await ctx.respond(embed=embed)
+
+
 
         @self.command(name="test")
         async def test(ctx):
