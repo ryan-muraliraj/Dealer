@@ -1,7 +1,7 @@
 import os, json, datetime
 from pathlib import Path
 
-class JSONManager():
+class Manager():
 
     def __init__(self) -> None:
         self.json = ""
@@ -32,11 +32,7 @@ class JSONManager():
                 print("load from server failed")
                 print(ex)
         else:
-            f = open(self.path, 'w')
-            f.close()
-            print("credits file created")
-            return False
-            
+            print("Error")
 
         pass
 
@@ -74,13 +70,11 @@ class JSONManager():
                 f = open(self.path, 'w')
                 x = {str(user_name) : datetime.datetime.now().isoformat()}
                 json.dump(x, f)
-                return False
             else:
                 f = open(self.path, 'r')
                 obj = json.load(f)
                 f.close()
                 if(str(user_name) in obj.keys()):
-                    print("user is inside!")
                     newtime = datetime.datetime.now()
                     oldtime = datetime.datetime.fromisoformat(obj[str(user_name)])
                     diff = newtime - oldtime
@@ -90,43 +84,16 @@ class JSONManager():
                         obj[str(user_name)] = datetime.datetime.now().isoformat()
                         json.dump(obj, f)
                         f.close()
-                        return True
+                        return 20
                     else:
                         return diff
                 else:
-                    print("Creating user.")
                     f = open(self.path, 'w').close()
                     f = open(self.path, 'w')
                     obj[str(user_name)] = datetime.datetime.now().isoformat()
                     json.dump(obj, f)
                     f.close()
-                    return True
+                    return 20
         except Exception as ex:
             print("daily is failing")
             print(ex)        
-    
-    def load_all(self, server_name:str):
-        y = os.path.join(os.path.dirname(__file__), "credits")
-        os.makedirs(y, exist_ok=True)
-        self.path = Path(y + "\\{NAME}.json".format(NAME = server_name))
-        if os.path.exists(self.path) and self.path.suffix == '.json':
-            try:
-                if(os.path.getsize(self.path) == 0):
-                    return dict()
-                f = open(self.path, 'r')
-                obj = json.load(f)
-                self.json = obj
-                f.close()   
-                return obj
-            except Exception as ex:
-                print("load from server failed")
-                print(ex)
-        else:
-            f = open(self.path, 'w')
-            f.close()
-            print("credits file created")
-            return dict()
-        
-m = JSONManager()
-x = m.load_all('WHX')
-print(x)                    
