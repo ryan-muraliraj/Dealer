@@ -10,7 +10,6 @@ Bucket 1
 
 
 Bucket 2
-> add spinall command
 > create send money command
 > make leaderboard better (multiple pages)
 > create wager (a bet between 2 people only)
