@@ -1,6 +1,7 @@
 import discord, datetime, random, string, math
 import constants, strings
 from jsonmanager import JSONManager
+from coinflip import CoinFlipManager, CoinFlip
 
 from discord.ext import bridge, commands
 
@@ -12,6 +13,7 @@ class Dealer(bridge.Bot):
         intents.presences = True
         intents.message_content = True
         self.jsonmanager = JSONManager()
+        self.coinflipmanager = CoinFlipManager()
 
         super().__init__(command_prefix="*", intents=intents, help_command=None)
 
@@ -24,6 +26,7 @@ class Dealer(bridge.Bot):
 
     def load_commands(self):
         JM = self.jsonmanager
+        CFM = self.coinflipmanager
        
         @self.slash_command(name="profile")
         async def profile(ctx, user: discord.Option(discord.Member, "Enter a username", required=False, default=None) = None):
@@ -275,7 +278,95 @@ class Dealer(bridge.Bot):
                 z+=1
             await ctx.respond(embed=embed)
 
+        @self.slash_command(name="coinflip")
+        async def coinflip(ctx, call : discord.Option(str, description="Create the coinflip with your side already chosen", autocomplete=discord.utils.basic_autocomplete(["Heads","Tails"]), required=False, default=None) = None):
+            if(not(call in ["Heads", "Tails", None])):
+                await ctx.respond("That was not a valid coin side")
+            else:
+                id = CFM.create_cf() if call == None else CFM.create_cf((call, ctx.author))
+                embed = await embed_coinflip()
+                if(call == "Heads"):
+                    embed = await embed_coinflip(player1=ctx.author)
+                elif(call == "Tails"):
+                    embed = await embed_coinflip(player2=ctx.author)
+                else:
+                    pass
+                await ctx.respond(embed = embed, view = buttons_coinflip(id))
+            
+            pass
+        #finish coinflip embed update when flip coin as well as denying player ability to assign themself to both outcomes.
+        async def embed_coinflip(player1 = "", player2 = "", winner = False):
+            embed = discord.Embed(title="Coinflip", description=f"Here is the coinflip!", color=discord.Color.dark_blue())
+            if(not(winner)):
+                embed.add_field(name="Heads", value=player1)
+                embed.add_field(name="Tails", value=player2, inline=True)
+            else:
+                embed.set_author(name="Coinflip")
+                embed.description = ""
+                if(player1 == ""):
+                    embed.title = f"The result is Tails. {player2} wins."
+                else:
+                    embed.title = f"The result is Heads. {player1} wins."
+            return embed
+            pass
 
+        class buttons_coinflip(discord.ui.View):
+            def __init__(self, id:int):
+                self.cfid = id
+                self.cf = CFM.get_cf(self.cfid)
+                super().__init__(timeout = None)
+
+            @discord.ui.button(label="Heads", style=discord.ButtonStyle.primary)
+            async def heads_button_callback(self, button, interaction):
+                if(self.cf.heads_taken() or self.cf.is_in(interaction.user.name)):
+                    pass
+                else:
+                    self.cf.add_player(("Heads", interaction.user.name))
+                    # await interaction.response.send_message(f"{interaction.user} locked in for Heads")
+                    if(self.cf.is_full()):
+                        embed = await embed_coinflip(interaction.user.name, self.cf.players["Tails"])
+                        await interaction.response.defer()
+                        print("trying to enable all")
+                        self.enable_all_items()      
+                        await interaction.edit_original_response(embed=embed, view=self)
+                    else:
+                        embed = await embed_coinflip(player1=interaction.user.name)
+                        await interaction.response.defer()
+                        await interaction.edit_original_response(embed=embed, view=self)
+                        
+                pass
+
+            @discord.ui.button(label="Tails", style=discord.ButtonStyle.primary)
+            async def tails_button_callback(self, button, interaction):
+                if(self.cf.tails_taken() or self.cf.is_in(interaction.user.name)):
+                    pass
+                else:
+                    self.cf.add_player(("Tails", interaction.user.name))
+                    # await interaction.response.send_message(f"{interaction.user} locked in for Tails")
+                    if(self.cf.is_full()):
+                        embed = await embed_coinflip(self.cf.players["Heads"], interaction.user.name)
+                        await interaction.response.defer()
+                        self.enable_all_items()
+                        await interaction.edit_original_response(embed=embed, view=self)
+                    else:
+                        embed = await embed_coinflip(player2=interaction.user.name)
+                        await interaction.response.defer()
+                        await interaction.edit_original_response(embed=embed, view=self)                    
+                pass               
+
+
+            @discord.ui.button(label="Flip Coin", style=discord.ButtonStyle.primary, disabled=True)
+            async def flip_button_callback(self, button, interaction):
+                result = self.cf.compute()
+                embed = await embed_coinflip()
+                if(result[0] == "Heads"):
+                    embed = await embed_coinflip(player1=result[1], winner=True)
+                else:
+                    embed = await embed_coinflip(player2=result[1], winner=True)
+                await interaction.response.defer()
+                self.disable_all_items()
+                await interaction.edit_original_response(embed=embed, view=self)
+                pass            
 
         @self.command(name="test")
         async def test(ctx):
