@@ -1,7 +1,7 @@
 import discord, datetime, random, string, math
-import constants, strings, bets
+import constants, strings
 from jsonmanager import JSONManager
-from coinflip import CoinFlipManager, CoinFlip
+from obj.coinflip import CoinFlipManager, CoinFlip
 
 from discord.ext import bridge, commands
 
