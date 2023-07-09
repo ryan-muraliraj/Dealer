@@ -2,6 +2,9 @@ Bucket 1
 > implement bets 
 > add server compatibilty
 > solidify econ
+> make daily better (change from 24 hrs to set time per day like 12pm)
+> create bets class -> max 5 outcomes
+> create bets manager class (can be within same file as bets class)
 > revamp the directories by making main.py the only file on the top level along with txtfiles and readme
 >> folder name: "dealer", contains "dealer.py, constants.py, jsonmanager.py" and the folders "objects, tests, data"
 >> folder name: "objects" will contain bets.py and any other objects created down the line
@@ -11,7 +14,7 @@ Bucket 1
 
 Bucket 2
 > create send money command
-> make leaderboard better
+> make leaderboard better (multiple pages)
 > create wager (a bet between 2 people only)
 > create flipcoin
 > create polls (both result showing live and not live)
@@ -29,7 +32,6 @@ Done
 > switch from discord.py to py-cord
 > lottery command
 > spin command
-> make daily better
 > leaderboard command
 
 
