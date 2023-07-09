@@ -1,6 +1,7 @@
 import discord, datetime, random, string, math
 import constants, strings, bets
 from jsonmanager import JSONManager
+from coinflip import CoinFlipManager, CoinFlip
 
 from discord.ext import bridge, commands
 
@@ -12,7 +13,9 @@ class Dealer(bridge.Bot):
         intents.presences = True
         intents.message_content = True
         self.jsonmanager = JSONManager()
+        self.coinflipmanager = CoinFlipManager()
         self.betmanager = bets.BetManager()
+
 
         super().__init__(command_prefix="*", intents=intents, help_command=None)
 
@@ -25,6 +28,7 @@ class Dealer(bridge.Bot):
 
     def load_commands(self):
         JM = self.jsonmanager
+        CFM = self.coinflipmanager
         BM = self.betmanager
 
         @self.slash_command(name="profile")
@@ -89,11 +93,11 @@ class Dealer(bridge.Bot):
         async def gen_daily() -> tuple:
             odds = random.randint(1,20)
             if(odds < 16):
-                return (0,random.randint(100,199))
+                return (0,random.randint(300,400))
             elif(odds < 20):
-                return (1,random.randint(200,400))
+                return (1,random.randint(500,700))
             else:
-                return (2,random.randint(1000,1500))
+                return (2,random.randint(1200,1600))
 
         async def embed_daily(user, response) -> discord.Embed:
             credits = JM.load_server('WHX', user, False)
@@ -207,6 +211,21 @@ class Dealer(bridge.Bot):
                 pass
             pass
         
+        @self.slash_command(name="spinall")
+        async def spin(ctx):
+            togamble = 0
+            if(JM.load_server('WHX', ctx.author, True)):
+                togamble = JM.load_server('WHX', ctx.author, False)
+                if(togamble < 100):
+                    await ctx.respond(f"You do not have 100 credits to gamble.")
+                else:
+                    spinresult = await gen_spin(togamble)
+                    JM.save_to_server('WHX',ctx.author,spinresult[1])
+                    embed = await embed_spin(ctx.author, spinresult, togamble)
+                    await ctx.respond(embed=embed)
+            else:
+                await ctx.respond("An error occured")
+            
         async def process_spin(ctx, togamble):
             if(JM.load_server('WHX', ctx.author, True)):
                 credits = JM.load_server('WHX', ctx.author, False)
@@ -222,32 +241,10 @@ class Dealer(bridge.Bot):
                 await ctx.respond("You need at least 100 credits to spin.")
             
         async def gen_spin(togamble:int) -> tuple:
-            rand = random.randint(1,500)
-            multiplier = 0
-            if (rand <= 250):
-                multiplier = 0.6
-            elif (rand <= 300):
-                multiplier = 0.8
-            elif (rand <= 400):
-                multiplier = 1
-            elif (rand <= 470):
-                multiplier = 1.2
-            elif (rand <= 480):
-                multiplier = 1.4
-            elif (rand <= 495):
-                multiplier = 2
-            elif (rand == 496):
-                multiplier = 3
-            elif (rand == 497):
-                multiplier = 4
-            elif (rand == 498):
-                multiplier = 8
-            elif (rand == 499):
-                multiplier = 16
-            elif (rand == 500):
-                multiplier = 32
-            else:
-                multiplier = 1
+            multipliers = [0.4, 0.6, 0.8, 1, 1.2, 1.4, 2, 3, 4, 8, 16, 32]
+            weights = [40,150,300,150,250,200,15,15,8,4,2,1]
+            rand = random.choices(multipliers, weights=weights)
+            multiplier = rand[0]
             winnings = math.ceil(multiplier*togamble)
             return (multiplier, winnings)
 
@@ -256,11 +253,11 @@ class Dealer(bridge.Bot):
             net = ""
             netint = spinresult[1]-investment
             if(netint < 0):
-                net = f"for a {abs(netint)} loss of credits!"
+                net = f"for a {abs(netint)} credit loss!"
             elif(netint > 0):
-                net = f"for a {netint} return on credits!"
+                net = f"for a {netint} net gain of credits!"
             else:
-                net = "to cut even!"
+                net = "to break even!"
             embed = discord.Embed(description=f"You landed on {spinresult[0]}x {net}", color=discord.Color.dark_blue())
             embed.set_author(name=user.name, icon_url=user.display_avatar)
             embed.set_thumbnail(url=f"{self.user.display_avatar}")
@@ -283,6 +280,103 @@ class Dealer(bridge.Bot):
                 embed.add_field(name="", value=f"**{z}.** {x}: `{y} credits`", inline = False)
                 z+=1
             await ctx.respond(embed=embed)
+
+
+        @self.slash_command(name="coinflip")
+        async def coinflip(ctx, call : discord.Option(str, description="Create the coinflip with your side already chosen", autocomplete=discord.utils.basic_autocomplete(["Heads","Tails"]), required=False, default=None) = None):
+            if(not(call in ["Heads", "Tails", None])):
+                await ctx.respond("That was not a valid coin side")
+            else:
+                id = CFM.create_cf() if call == None else CFM.create_cf((call, ctx.author))
+                embed = await embed_coinflip()
+                if(call == "Heads"):
+                    embed = await embed_coinflip(player1=ctx.author)
+                elif(call == "Tails"):
+                    embed = await embed_coinflip(player2=ctx.author)
+                else:
+                    pass
+                await ctx.respond(embed = embed, view = buttons_coinflip(id))
+            
+            pass
+        #finish coinflip embed update when flip coin as well as denying player ability to assign themself to both outcomes.
+        async def embed_coinflip(player1 = "", player2 = "", winner = False):
+            embed = discord.Embed(title="Coinflip", description=f"Here is the coinflip!", color=discord.Color.dark_blue())
+            if(not(winner)):
+                embed.add_field(name="Heads", value=player1)
+                embed.add_field(name="Tails", value=player2, inline=True)
+            else:
+                embed.set_author(name="Coinflip")
+                embed.description = ""
+                if(player1 == ""):
+                    embed.title = f"The result is Tails. {player2} wins."
+                else:
+                    embed.title = f"The result is Heads. {player1} wins."
+            return embed
+            pass
+
+        class buttons_coinflip(discord.ui.View):
+            def __init__(self, id:int):
+                self.cfid = id
+                self.cf = CFM.get_cf(self.cfid)
+                super().__init__(timeout = None)
+
+            @discord.ui.button(label="Heads", style=discord.ButtonStyle.primary)
+            async def heads_button_callback(self, button, interaction):
+                if(self.cf.heads_taken() or self.cf.is_in(interaction.user.name)):
+                    pass
+                else:
+                    self.cf.add_player(("Heads", interaction.user.name))
+                    # await interaction.response.send_message(f"{interaction.user} locked in for Heads")
+                    if(self.cf.is_full()):
+                        embed = await embed_coinflip(interaction.user.name, self.cf.players["Tails"])
+                        await interaction.response.defer()
+                        print("trying to enable all")
+                        self.enable_all_items()      
+                        await interaction.edit_original_response(embed=embed, view=self)
+                    else:
+                        embed = await embed_coinflip(player1=interaction.user.name)
+                        await interaction.response.defer()
+                        await interaction.edit_original_response(embed=embed, view=self)
+                        
+                pass
+
+            @discord.ui.button(label="Tails", style=discord.ButtonStyle.primary)
+            async def tails_button_callback(self, button, interaction):
+                if(self.cf.tails_taken() or self.cf.is_in(interaction.user.name)):
+                    pass
+                else:
+                    self.cf.add_player(("Tails", interaction.user.name))
+                    # await interaction.response.send_message(f"{interaction.user} locked in for Tails")
+                    if(self.cf.is_full()):
+                        embed = await embed_coinflip(self.cf.players["Heads"], interaction.user.name)
+                        await interaction.response.defer()
+                        self.enable_all_items()
+                        await interaction.edit_original_response(embed=embed, view=self)
+                    else:
+                        embed = await embed_coinflip(player2=interaction.user.name)
+                        await interaction.response.defer()
+                        await interaction.edit_original_response(embed=embed, view=self)                    
+                pass               
+
+
+            @discord.ui.button(label="Flip Coin", style=discord.ButtonStyle.primary, disabled=True)
+            async def flip_button_callback(self, button, interaction):
+                result = self.cf.compute()
+                embed = await embed_coinflip()
+                if(result[0] == "Heads"):
+                    embed = await embed_coinflip(player1=result[1], winner=True)
+                else:
+                    embed = await embed_coinflip(player2=result[1], winner=True)
+                await interaction.response.defer()
+                self.disable_all_items()
+                await interaction.edit_original_response(embed=embed, view=self)
+                pass            
+
+        @self.command(name="test")
+        async def test(ctx):
+                print("a")
+                await ctx.message.add_reaction("🗿")
+                print("b")
 
         @self.slash_command(name="bet")
         async def bet(ctx, title: discord.Option(str, "Enter a title for the bet", required = True)):
@@ -376,6 +470,7 @@ class Dealer(bridge.Bot):
                 embed = discord.Embed(title="Modal Results")
                 embed.add_field(name="Short Input", value=self.children[0].value)
                 await interaction.response.send_message(embed=embed) 
+
 
         @self.event
         async def on_ready():

@@ -1,4 +1,7 @@
 Bucket 1
+> implement bets 
+> add server compatibilty
+> solidify econ
 > make daily better (change from 24 hrs to set time per day like 12pm)
 > create bets class -> max 5 outcomes
 > create bets manager class (can be within same file as bets class)
