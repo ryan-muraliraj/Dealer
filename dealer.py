@@ -14,7 +14,7 @@ class Dealer(bridge.Bot):
         intents.message_content = True
         self.jsonmanager = JSONManager()
         self.coinflipmanager = CoinFlipManager()
-        self.betmanager = bets.BetManager()
+        # self.betmanager = bets.BetManager()
 
 
         super().__init__(command_prefix="*", intents=intents, help_command=None)
@@ -29,7 +29,7 @@ class Dealer(bridge.Bot):
     def load_commands(self):
         JM = self.jsonmanager
         CFM = self.coinflipmanager
-        BM = self.betmanager
+        # BM = self.betmanager
 
         @self.slash_command(name="profile")
         async def profile(ctx, user: discord.Option(discord.Member, "Enter a username", required=False, default=None) = None):
