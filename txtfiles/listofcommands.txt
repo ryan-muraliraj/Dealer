@@ -3,3 +3,5 @@ daily
 lottery
 spin
 leaderboard
+coinflip
+spinall
