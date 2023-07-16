@@ -287,12 +287,12 @@ class Dealer(bridge.Bot):
             if(not(call in ["Heads", "Tails", None])):
                 await ctx.respond("That was not a valid coin side")
             else:
-                id = CFM.create_cf() if call == None else CFM.create_cf((call, ctx.author))
+                id = CFM.create_cf() if call == None else CFM.create_cf((call, ctx.author.name))
                 embed = await embed_coinflip()
                 if(call == "Heads"):
-                    embed = await embed_coinflip(player1=ctx.author)
+                    embed = await embed_coinflip(player1=ctx.author.name)
                 elif(call == "Tails"):
-                    embed = await embed_coinflip(player2=ctx.author)
+                    embed = await embed_coinflip(player2=ctx.author.name)
                 else:
                     pass
                 await ctx.respond(embed = embed, view = buttons_coinflip(id))
@@ -312,7 +312,6 @@ class Dealer(bridge.Bot):
                 else:
                     embed.title = f"The result is Heads. {player1} wins."
             return embed
-            pass
 
         class buttons_coinflip(discord.ui.View):
             def __init__(self, id:int):
